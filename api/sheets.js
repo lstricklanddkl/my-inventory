@@ -7,11 +7,17 @@ const PROD_RANGE  = 'Products!A:B';
 const INV_HEADERS  = [['ID', 'Barcode', 'Product Name', 'Quantity', 'Timestamp']];
 const PROD_HEADERS = [['Barcode', 'Product Name']];
 
+function parsePrivateKey(raw) {
+  return (raw || '')
+    .replace(/^["']|["']$/g, '')  // strip accidental surrounding quotes
+    .replace(/\\n/g, '\n');       // literal \n → real newlines
+}
+
 function buildClient() {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+      private_key: parsePrivateKey(process.env.GOOGLE_PRIVATE_KEY),
     },
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
