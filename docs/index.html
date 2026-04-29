@@ -566,8 +566,8 @@ async function saveEntry() {
     toast('Saving to Sheets…');
     try {
       await Promise.all([
-        fetch(`${apiUrl}/api/entries`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: [entry] }) }),
-        fetch(`${apiUrl}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ barcode, name }) }),
+        fetch(`${apiUrl}/entries`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: [entry] }) }),
+        fetch(`${apiUrl}/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ barcode, name }) }),
       ]);
       toast('Saved to Sheets');
     } catch {
@@ -604,7 +604,7 @@ async function renderInventory() {
   if (apiUrl) {
     document.getElementById('btn-sync').textContent = 'Refresh';
     try {
-      const res = await fetch(`${apiUrl}/api/entries`);
+      const res = await fetch(`${apiUrl}/entries`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       displayEntries(await res.json());
       return;
@@ -626,7 +626,7 @@ document.getElementById('btn-sync').addEventListener('click', async () => {
     // API mode: pull latest from Sheets
     btn.textContent = 'Refreshing…';
     try {
-      const res = await fetch(`${apiUrl}/api/entries`);
+      const res = await fetch(`${apiUrl}/entries`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       displayEntries(await res.json());
       toast('Refreshed from Sheets');
