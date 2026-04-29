@@ -2,19 +2,48 @@ require('dotenv').config();
 const express  = require('express');
 const cors     = require('cors');
 const { getEntries, appendEntries, getProduct, upsertProduct } = require('./sheets');
+const { getAuthUrl, handleCallback, requireAuth } = require('./auth');
 
 const app = express();
 
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || '*',
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.options('*', cors()); // explicit preflight handler
+app.options('*', cors());
 app.use(express.json());
 
 // ── Health check ───────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
+app.get('/auth/login', (_req, res) => {
+  res.redirect(getAuthUrl());
+});
+
+app.get('/auth/callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error || !code) {
+    return res.status(400).send('Google sign-in was cancelled or failed.');
+  }
+  try {
+    const token = await handleCallback(code);
+    const appUrl = process.env.APP_URL || '/';
+    res.redirect(`${appUrl}#token=${encodeURIComponent(token)}`);
+  } catch (err) {
+    console.error('Auth callback error:', err.message);
+    const status = err.status || 500;
+    res.status(status).send(err.message);
+  }
+});
+
+// ── Protected API routes ───────────────────────────────────────────────────────
+app.use('/api', requireAuth);
+
+app.get('/api/me', (req, res) => {
+  res.json({ email: req.user.email, name: req.user.name, picture: req.user.picture });
+});
 
 // ── Entries ────────────────────────────────────────────────────────────────────
 app.get('/api/entries', async (_req, res) => {

@@ -12,6 +12,7 @@
       --blue:      #007AFF;
       --green:     #34C759;
       --orange:    #FF9500;
+      --red:       #FF3B30;
       --bg:        #F2F2F7;
       --surface:   #FFFFFF;
       --label:     #1C1C1E;
@@ -27,8 +28,85 @@
       overflow: hidden;
     }
 
-    #app {
+    /* ── Login screen ── */
+    #login-screen {
+      display: none;
+      height: 100dvh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+      background: var(--bg);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 360px;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .login-icon {
+      width: 72px; height: 72px;
+      background: var(--blue);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-title { font-size: 26px; font-weight: 700; }
+    .login-sub   { font-size: 15px; color: var(--secondary); }
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--separator);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--label);
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-google:active { opacity: 0.7; }
+    .login-configure {
+      width: 100%;
+      margin-top: 8px;
+    }
+    .login-configure summary {
+      font-size: 13px;
+      color: var(--secondary);
+      cursor: pointer;
+      text-align: center;
+      padding: 4px;
+      list-style: none;
+    }
+    .login-configure summary::-webkit-details-marker { display: none; }
+    .login-configure-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .login-configure-body p {
+      font-size: 13px;
+      color: var(--secondary);
+      line-height: 1.5;
+    }
+    .login-error {
+      font-size: 13px;
+      color: var(--red);
+      text-align: center;
+      display: none;
+    }
+
+    /* ── Main app ── */
+    #app {
+      display: none;
       flex-direction: column;
       height: 100dvh;
     }
@@ -77,11 +155,9 @@
       position: relative;
     }
     #reader { width: 100%; max-width: 540px; }
-    /* suppress html5-qrcode's built-in header/footer chrome */
     #reader__header_message,
     #reader__dashboard_section_swaplink,
     #reader__filescan_input { display: none !important; }
-
     #scan-prompt {
       display: flex;
       flex-direction: column;
@@ -110,11 +186,7 @@
     }
 
     /* ── Inventory view ── */
-    #inv-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 16px;
-    }
+    #inv-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; }
     .inv-row {
       display: flex;
       align-items: center;
@@ -124,23 +196,10 @@
       margin-bottom: 8px;
     }
     .inv-row-main { flex: 1; min-width: 0; }
-    .inv-name {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .inv-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .inv-meta { font-size: 12px; color: var(--secondary); margin-top: 2px; }
-    .inv-qty { font-size: 22px; font-weight: 700; color: var(--blue); margin-left: 12px; flex-shrink: 0; }
-    .inv-empty {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--secondary);
-      font-size: 16px;
-    }
+    .inv-qty  { font-size: 22px; font-weight: 700; color: var(--blue); margin-left: 12px; flex-shrink: 0; }
+    .inv-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 16px; }
     .inv-footer {
       display: flex;
       align-items: center;
@@ -165,7 +224,7 @@
     #btn-sync:disabled { opacity: 0.5; }
 
     /* ── Settings view ── */
-    .settings-body { padding: 24px 16px; overflow-y: auto; }
+    .settings-body { padding: 16px; overflow-y: auto; }
     .field-label {
       font-size: 13px;
       font-weight: 600;
@@ -175,6 +234,36 @@
       margin-bottom: 8px;
     }
     .hint { font-size: 14px; color: var(--secondary); line-height: 1.5; margin-bottom: 16px; }
+
+    /* user card */
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 24px;
+    }
+    .user-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--separator);
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name  { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 12px; color: var(--secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-signout {
+      background: none;
+      border: 1px solid var(--separator);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--red);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
 
     /* ── Shared inputs / buttons ── */
     input[type="text"],
@@ -190,7 +279,6 @@
       -webkit-appearance: none;
     }
     input:focus { outline: none; border-color: var(--blue); }
-
     .btn-primary {
       width: 100%;
       background: var(--blue);
@@ -216,17 +304,8 @@
     }
 
     /* ── Add-item sheet ── */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(0,0,0,0.45);
-      align-items: flex-end;
-    }
-    .overlay.active {
-      display: flex;
-    }
+    .overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.45); align-items: flex-end; }
+    .overlay.active { display: flex; }
     .sheet {
       background: var(--bg);
       border-radius: 20px 20px 0 0;
@@ -235,15 +314,9 @@
       max-height: 92dvh;
       overflow-y: auto;
     }
-    .sheet-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--separator);
-      border-radius: 2px;
-      margin: 0 auto 20px;
-    }
+    .sheet-handle { width: 36px; height: 4px; background: var(--separator); border-radius: 2px; margin: 0 auto 20px; }
     .sheet .field-group { margin-bottom: 20px; }
-    .name-hint { font-weight: 400; text-transform: none; font-size: 12px; color: var(--orange); }
+    .name-hint    { font-weight: 400; text-transform: none; font-size: 12px; color: var(--orange); }
     .barcode-value { font-size: 15px; font-family: monospace; color: var(--label); }
 
     /* ── Toast ── */
@@ -267,6 +340,42 @@
   </style>
 </head>
 <body>
+
+<!-- ── Login screen ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="7" y1="12" x2="17" y2="12" stroke-width="2.2"/>
+      </svg>
+    </div>
+    <h1 class="login-title">Inventory Scanner</h1>
+    <p class="login-sub">Sign in to continue</p>
+    <p class="login-error" id="login-error"></p>
+    <button class="btn-google" id="btn-google-login">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <details class="login-configure" id="login-configure">
+      <summary>⚙ Configure API URL</summary>
+      <div class="login-configure-body">
+        <p>Enter your deployed API URL to enable sign-in.</p>
+        <input type="text" id="login-api-url"
+          placeholder="https://your-service.onrender.com"
+          autocomplete="off" autocapitalize="none" autocorrect="off" />
+        <button class="btn-primary" id="btn-save-login-api-url">Save</button>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ── Main app ── -->
 <div id="app">
 
   <!-- ── Scanner ── -->
@@ -298,24 +407,31 @@
   <!-- ── Settings ── -->
   <div id="view-settings" class="view">
     <div class="settings-body">
-      <div class="field-label">API URL <span style="font-weight:400;text-transform:none;color:var(--green);font-size:11px;">(recommended)</span></div>
-      <p class="hint">
-        Deploy the Node.js service from <code>inventory-api/</code> and paste its URL here.
-        Enables real-time Sheets reads/writes with full confirmation.
-      </p>
+      <!-- User card -->
+      <div class="user-card">
+        <img class="user-avatar" id="user-avatar" src="" alt="" />
+        <div class="user-info">
+          <div class="user-name"  id="user-name"></div>
+          <div class="user-email" id="user-email"></div>
+        </div>
+        <button class="btn-signout" id="btn-signout">Sign out</button>
+      </div>
+
+      <div class="field-label">API URL</div>
+      <p class="hint">URL of the deployed Node.js service.</p>
       <input type="text" id="input-api-url"
         placeholder="https://your-service.onrender.com"
         autocomplete="off" autocapitalize="none" autocorrect="off" />
 
       <div class="field-label" style="margin-top:28px;">
-        Apps Script URL <span style="font-weight:400;text-transform:none;color:var(--secondary);font-size:11px;">(fallback)</span>
+        Apps Script URL <span style="font-weight:400;text-transform:none;color:var(--secondary);font-size:11px;">(fallback — no auth)</span>
       </div>
       <p class="hint">Used only when no API URL is set. Fire-and-forget; no read-back.</p>
       <input type="text" id="input-url"
         placeholder="https://script.google.com/macros/s/…/exec"
         autocomplete="off" autocapitalize="none" autocorrect="off" />
 
-      <button class="btn-primary" id="btn-save-url" style="margin-top:16px;">Save</button>
+      <button class="btn-primary" id="btn-save-url" style="margin-top:16px;">Save Settings</button>
     </div>
   </div>
 
@@ -338,7 +454,7 @@
         <input type="number" id="add-qty" placeholder="e.g. 12" min="0" step="any" inputmode="decimal" />
       </div>
       <button class="btn-primary" id="btn-save-entry">Save Entry</button>
-      <button class="btn-ghost" id="btn-cancel-entry">Cancel</button>
+      <button class="btn-ghost"   id="btn-cancel-entry">Cancel</button>
     </div>
   </div>
 
@@ -373,29 +489,95 @@
 <div id="toast"></div>
 
 <script>
-// ── Storage ──────────────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const TOKEN_KEY = 'inv_token';
+
+function getToken()  { return localStorage.getItem(TOKEN_KEY); }
+function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
+
+function getUser() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp * 1000 < Date.now()) { clearToken(); return null; }
+    return payload;
+  } catch { clearToken(); return null; }
+}
+
+function showLogin(msg) {
+  document.getElementById('app').style.display          = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  const errEl = document.getElementById('login-error');
+  if (msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+  else      { errEl.style.display = 'none'; }
+  // Auto-open configure section if no API URL set
+  if (!Store.apiUrl()) document.getElementById('login-configure').open = true;
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display          = 'flex';
+}
+
+function signOut() {
+  clearToken();
+  showLogin();
+}
+
+// Login screen handlers
+document.getElementById('btn-google-login').addEventListener('click', () => {
+  const apiUrl = Store.apiUrl();
+  if (!apiUrl) {
+    document.getElementById('login-configure').open = true;
+    toast('Enter and save your API URL first');
+    return;
+  }
+  window.location.href = `${apiUrl}/auth/login`;
+});
+
+document.getElementById('btn-save-login-api-url').addEventListener('click', () => {
+  const url = document.getElementById('login-api-url').value.trim();
+  if (url && !url.startsWith('https://')) { toast('URL must start with https://'); return; }
+  Store.setApiUrl(url);
+  document.getElementById('login-configure').open = false;
+  toast('Saved — now tap Sign in with Google');
+});
+
+document.getElementById('btn-signout').addEventListener('click', signOut);
+
+// ── Authenticated fetch ───────────────────────────────────────────────────────
+async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${Store.apiUrl()}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    clearToken();
+    showLogin('Your session expired — please sign in again.');
+    throw new Error('Session expired');
+  }
+  return res;
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
 const Store = {
   products()  { return JSON.parse(localStorage.getItem('inv_products') || '{}'); },
   entries()   { return JSON.parse(localStorage.getItem('inv_entries')  || '[]'); },
   sheetsUrl() { return localStorage.getItem('inv_sheets_url') || ''; },
-  apiUrl()    { return localStorage.getItem('inv_api_url') || ''; },
+  apiUrl()    { return localStorage.getItem('inv_api_url')    || ''; },
 
   cacheProduct(barcode, name) {
-    const p = this.products();
-    p[barcode] = name;
+    const p = this.products(); p[barcode] = name;
     localStorage.setItem('inv_products', JSON.stringify(p));
   },
   productName(barcode) { return this.products()[barcode] || null; },
 
   addEntry(barcode, name, qty) {
     const list = this.entries();
-    list.unshift({
-      id: Date.now(),
-      barcode,
-      name,
-      qty: Number(qty),
-      timestamp: new Date().toISOString(),
-    });
+    list.unshift({ id: Date.now(), barcode, name, qty: Number(qty), timestamp: new Date().toISOString() });
     localStorage.setItem('inv_entries', JSON.stringify(list));
   },
 
@@ -405,32 +587,23 @@ const Store = {
 
 // ── Product lookup ────────────────────────────────────────────────────────────
 async function lookupProduct(barcode) {
-  // 1. Local cache — always fastest
   const local = Store.productName(barcode);
   if (local) return { name: local, source: 'local' };
 
-  // 2. API (Sheets Products tab)
-  const apiUrl = Store.apiUrl();
-  if (apiUrl) {
+  if (Store.apiUrl()) {
     try {
-      const res = await fetch(`${apiUrl}/api/products/${encodeURIComponent(barcode)}`);
+      const res = await apiFetch(`/api/products/${encodeURIComponent(barcode)}`);
       if (res.ok) {
         const d = await res.json();
-        if (d.found) {
-          Store.cacheProduct(barcode, d.name);
-          return { name: d.name, source: 'local' };
-        }
+        if (d.found) { Store.cacheProduct(barcode, d.name); return { name: d.name, source: 'local' }; }
       }
-    } catch { /* API offline, fall through */ }
+    } catch { /* API offline */ }
   }
 
-  // 3. Open Food Facts
   try {
     const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
     const d   = await res.json();
-    if (d.status === 1 && d.product?.product_name) {
-      return { name: d.product.product_name, source: 'api' };
-    }
+    if (d.status === 1 && d.product?.product_name) return { name: d.product.product_name, source: 'api' };
   } catch { /* offline */ }
 
   return { name: '', source: 'unknown' };
@@ -453,39 +626,28 @@ document.querySelectorAll('.tab').forEach(tab =>
 
 async function switchView(name) {
   if (name !== 'scanner') await stopScanner();
-
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.view === name)
-  );
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === name));
   document.getElementById(`view-${name}`).classList.add('active');
-
   if (name === 'inventory') renderInventory();
   if (name === 'settings')  loadSettings();
 }
 
 // ── Scanner ───────────────────────────────────────────────────────────────────
-let scanner       = null;
-let scannerActive = false;
-let pendingScan   = false;
+let scanner = null, scannerActive = false, pendingScan = false;
 
 document.getElementById('btn-start-scan').addEventListener('click', startScanner);
 
 async function startScanner() {
-  if (typeof Html5Qrcode === 'undefined') {
-    toast('Scanner library failed to load — check your connection.');
-    return;
-  }
+  if (typeof Html5Qrcode === 'undefined') { toast('Scanner library failed to load.'); return; }
   document.getElementById('scan-prompt').style.display = 'none';
   document.getElementById('scan-hint').style.display   = 'block';
-
   scanner = new Html5Qrcode('reader');
   try {
     await scanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 260, height: 150 }, aspectRatio: 1.77 },
-      onBarcodeScanned,
-      () => {} // suppress per-frame decode errors
+      onBarcodeScanned, () => {}
     );
     scannerActive = true;
   } catch (err) {
@@ -498,9 +660,8 @@ async function startScanner() {
 async function stopScanner() {
   if (scanner && scannerActive) {
     try { await scanner.stop(); } catch { /* ignore */ }
-    scanner       = null;
-    scannerActive = false;
-    document.getElementById('reader').innerHTML        = '';
+    scanner = null; scannerActive = false;
+    document.getElementById('reader').innerHTML = '';
     document.getElementById('scan-prompt').style.display = 'flex';
     document.getElementById('scan-hint').style.display   = 'none';
   }
@@ -515,19 +676,15 @@ async function onBarcodeScanned(barcode) {
 
 // ── Add-item sheet ────────────────────────────────────────────────────────────
 function showAddSheet(barcode, name, source) {
-  document.getElementById('add-barcode').textContent    = barcode;
-  document.getElementById('add-name').value             = name;
-  document.getElementById('add-qty').value              = '';
-  document.getElementById('add-name-hint').textContent  =
+  document.getElementById('add-barcode').textContent   = barcode;
+  document.getElementById('add-name').value            = name;
+  document.getElementById('add-qty').value             = '';
+  document.getElementById('add-name-hint').textContent =
     source === 'unknown' ? '(not found — please enter)' :
     source === 'api'     ? '(from Open Food Facts)'     : '';
-
   document.getElementById('overlay-add').classList.add('active');
   document.body.style.overflow = 'hidden';
-
-  setTimeout(() => {
-    document.getElementById(source === 'unknown' ? 'add-name' : 'add-qty').focus();
-  }, 150);
+  setTimeout(() => document.getElementById(source === 'unknown' ? 'add-name' : 'add-qty').focus(), 150);
 }
 
 function hideAddSheet() {
@@ -540,34 +697,28 @@ document.getElementById('btn-cancel-entry').addEventListener('click', hideAddShe
 document.getElementById('overlay-add').addEventListener('click', e => {
   if (e.target === document.getElementById('overlay-add')) hideAddSheet();
 });
-
 document.getElementById('btn-save-entry').addEventListener('click', saveEntry);
-document.getElementById('add-qty').addEventListener('keydown', e => {
-  if (e.key === 'Enter') saveEntry();
-});
+document.getElementById('add-qty').addEventListener('keydown', e => { if (e.key === 'Enter') saveEntry(); });
 
 async function saveEntry() {
   const barcode = document.getElementById('add-barcode').textContent.trim();
   const name    = document.getElementById('add-name').value.trim();
   const qty     = parseFloat(document.getElementById('add-qty').value);
 
-  if (!name)                   { toast('Please enter a product name'); return; }
-  if (isNaN(qty) || qty <= 0)  { toast('Please enter a valid quantity'); return; }
+  if (!name)                  { toast('Please enter a product name'); return; }
+  if (isNaN(qty) || qty <= 0) { toast('Please enter a valid quantity'); return; }
 
   const entry = { id: Date.now(), barcode, name, qty, timestamp: new Date().toISOString() };
-
-  // Always write locally first so the app never blocks on network
   Store.cacheProduct(barcode, name);
   Store.addEntry(barcode, name, qty);
   hideAddSheet();
 
-  const apiUrl = Store.apiUrl();
-  if (apiUrl) {
+  if (Store.apiUrl()) {
     toast('Saving to Sheets…');
     try {
       await Promise.all([
-        fetch(`${apiUrl}/api/entries`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: [entry] }) }),
-        fetch(`${apiUrl}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ barcode, name }) }),
+        apiFetch('/api/entries',  { method: 'POST', body: JSON.stringify({ entries: [entry] }) }),
+        apiFetch('/api/products', { method: 'POST', body: JSON.stringify({ barcode, name }) }),
       ]);
       toast('Saved to Sheets');
     } catch {
@@ -580,13 +731,9 @@ async function saveEntry() {
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
 function displayEntries(entries) {
-  const list  = document.getElementById('inv-list');
-  const empty = document.getElementById('inv-empty');
+  const list = document.getElementById('inv-list'), empty = document.getElementById('inv-empty');
   document.getElementById('inv-count').textContent = `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}`;
-
-  if (entries.length === 0) {
-    list.innerHTML = ''; empty.style.display = 'flex'; return;
-  }
+  if (entries.length === 0) { list.innerHTML = ''; empty.style.display = 'flex'; return; }
   empty.style.display = 'none';
   list.innerHTML = entries.map(e => `
     <div class="inv-row">
@@ -595,21 +742,18 @@ function displayEntries(entries) {
         <div class="inv-meta">${esc(e.barcode)} &middot; ${new Date(e.timestamp).toLocaleString()}</div>
       </div>
       <div class="inv-qty">${e.qty}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function renderInventory() {
-  const apiUrl = Store.apiUrl();
-  if (apiUrl) {
+  if (Store.apiUrl()) {
     document.getElementById('btn-sync').textContent = 'Refresh';
     try {
-      const res = await fetch(`${apiUrl}/api/entries`);
+      const res = await apiFetch('/api/entries');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      displayEntries(await res.json());
-      return;
-    } catch {
-      toast('Could not reach API — showing local data');
+      displayEntries(await res.json()); return;
+    } catch (e) {
+      if (e.message !== 'Session expired') toast('Could not reach API — showing local data');
     }
   } else {
     document.getElementById('btn-sync').textContent = 'Sync to Sheets';
@@ -618,52 +762,42 @@ async function renderInventory() {
 }
 
 document.getElementById('btn-sync').addEventListener('click', async () => {
-  const apiUrl = Store.apiUrl();
-  const btn    = document.getElementById('btn-sync');
+  const btn = document.getElementById('btn-sync');
   btn.disabled = true;
 
-  if (apiUrl) {
-    // API mode: pull latest from Sheets
+  if (Store.apiUrl()) {
     btn.textContent = 'Refreshing…';
     try {
-      const res = await fetch(`${apiUrl}/api/entries`);
+      const res = await apiFetch('/api/entries');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       displayEntries(await res.json());
       toast('Refreshed from Sheets');
     } catch (e) {
-      toast('Refresh failed: ' + e.message);
-    } finally {
-      btn.disabled = false; btn.textContent = 'Refresh';
-    }
+      if (e.message !== 'Session expired') toast('Refresh failed: ' + e.message);
+    } finally { btn.disabled = false; btn.textContent = 'Refresh'; }
     return;
   }
 
-  // Fallback: Apps Script fire-and-forget
   const scriptUrl = Store.sheetsUrl();
-  if (!scriptUrl) {
-    toast('Add an API or Apps Script URL in Settings first');
-    btn.disabled = false;
-    switchView('settings');
-    return;
-  }
+  if (!scriptUrl) { toast('Add an API or Apps Script URL in Settings first'); btn.disabled = false; switchView('settings'); return; }
   btn.textContent = 'Syncing…';
   try {
-    await fetch(scriptUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ entries: Store.entries() }),
-      mode: 'no-cors',
-    });
+    await fetch(scriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ entries: Store.entries() }), mode: 'no-cors' });
     toast('Sync sent — check your Sheet to confirm');
-  } catch (e) {
-    toast('Sync error: ' + e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Sync to Sheets';
-  }
+  } catch (e) { toast('Sync error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Sync to Sheets'; }
 });
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 function loadSettings() {
+  const user = getUser();
+  if (user) {
+    document.getElementById('user-name').textContent  = user.name  || '';
+    document.getElementById('user-email').textContent = user.email || '';
+    const avatar = document.getElementById('user-avatar');
+    if (user.picture) { avatar.src = user.picture; avatar.style.display = 'block'; }
+    else { avatar.style.display = 'none'; }
+  }
   document.getElementById('input-api-url').value = Store.apiUrl();
   document.getElementById('input-url').value     = Store.sheetsUrl();
 }
@@ -671,14 +805,8 @@ function loadSettings() {
 document.getElementById('btn-save-url').addEventListener('click', () => {
   const apiUrl    = document.getElementById('input-api-url').value.trim();
   const scriptUrl = document.getElementById('input-url').value.trim();
-
-  if (apiUrl && !apiUrl.startsWith('https://')) {
-    toast('API URL must start with https://'); return;
-  }
-  if (scriptUrl && !scriptUrl.startsWith('https://script.google.com')) {
-    toast('Apps Script URL should start with https://script.google.com'); return;
-  }
-
+  if (apiUrl    && !apiUrl.startsWith('https://'))                    { toast('API URL must start with https://'); return; }
+  if (scriptUrl && !scriptUrl.startsWith('https://script.google.com')){ toast('Apps Script URL looks wrong'); return; }
   Store.setApiUrl(apiUrl);
   Store.setSheetsUrl(scriptUrl);
   toast('Settings saved');
@@ -686,10 +814,25 @@ document.getElementById('btn-save-url').addEventListener('click', () => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function init() {
+  // Extract token from URL hash after OAuth redirect
+  const match = window.location.hash.match(/[#&]token=([^&]*)/);
+  if (match) {
+    localStorage.setItem(TOKEN_KEY, decodeURIComponent(match[1]));
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
+  const user = getUser();
+  if (user) {
+    showApp();
+  } else {
+    showLogin();
+  }
+})();
 </script>
 </body>
 </html>
