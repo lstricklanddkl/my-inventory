@@ -575,9 +575,9 @@ const Store = {
   },
   productName(barcode) { return this.products()[barcode] || null; },
 
-  addEntry(barcode, name, qty) {
+  addEntry(barcode, name, qty, addedBy = '') {
     const list = this.entries();
-    list.unshift({ id: Date.now(), barcode, name, qty: Number(qty), timestamp: new Date().toISOString() });
+    list.unshift({ id: Date.now(), barcode, name, qty: Number(qty), timestamp: new Date().toISOString(), addedBy });
     localStorage.setItem('inv_entries', JSON.stringify(list));
   },
 
@@ -708,9 +708,10 @@ async function saveEntry() {
   if (!name)                  { toast('Please enter a product name'); return; }
   if (isNaN(qty) || qty <= 0) { toast('Please enter a valid quantity'); return; }
 
-  const entry = { id: Date.now(), barcode, name, qty, timestamp: new Date().toISOString() };
+  const addedBy = getUser()?.email ?? '';
+  const entry = { id: Date.now(), barcode, name, qty, timestamp: new Date().toISOString(), addedBy };
   Store.cacheProduct(barcode, name);
-  Store.addEntry(barcode, name, qty);
+  Store.addEntry(barcode, name, qty, addedBy);
   hideAddSheet();
 
   if (Store.apiUrl()) {
@@ -739,7 +740,7 @@ function displayEntries(entries) {
     <div class="inv-row">
       <div class="inv-row-main">
         <div class="inv-name">${esc(e.name)}</div>
-        <div class="inv-meta">${esc(e.barcode)} &middot; ${new Date(e.timestamp).toLocaleString()}</div>
+        <div class="inv-meta">${esc(e.barcode)} &middot; ${new Date(e.timestamp).toLocaleString()}${e.addedBy ? ' &middot; ' + esc(e.addedBy) : ''}</div>
       </div>
       <div class="inv-qty">${e.qty}</div>
     </div>`).join('');

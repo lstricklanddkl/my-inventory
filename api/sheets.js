@@ -2,9 +2,9 @@ const { google } = require('googleapis');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
-const INV_RANGE   = 'Inventory!A:E';
+const INV_RANGE   = 'Inventory!A:F';
 const PROD_RANGE  = 'Products!A:B';
-const INV_HEADERS  = [['ID', 'Barcode', 'Product Name', 'Quantity', 'Timestamp']];
+const INV_HEADERS  = [['ID', 'Barcode', 'Product Name', 'Quantity', 'Timestamp', 'Added By']];
 const PROD_HEADERS = [['Barcode', 'Product Name']];
 
 function parsePrivateKey(raw) {
@@ -79,14 +79,15 @@ async function getEntries() {
   await ensureHeaders(client);
   const res = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'Inventory!A2:E',
+    range: 'Inventory!A2:F',
   });
-  return (res.data.values || []).map(([id, barcode, name, qty, timestamp]) => ({
+  return (res.data.values || []).map(([id, barcode, name, qty, timestamp, addedBy = '']) => ({
     id,
     barcode,
     name,
     qty: Number(qty),
     timestamp,
+    addedBy,
   }));
 }
 
@@ -99,6 +100,7 @@ async function appendEntries(entries) {
     e.name,
     e.qty,
     e.timestamp ?? new Date().toISOString(),
+    e.addedBy ?? '',
   ]);
   await client.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,

@@ -61,7 +61,8 @@ app.post('/api/entries', async (req, res) => {
     return res.status(400).json({ error: 'body must contain a non-empty entries array' });
   }
   try {
-    await appendEntries(entries);
+    const enriched = entries.map(e => ({ ...e, addedBy: req.user.email }));
+    await appendEntries(enriched);
     res.json({ ok: true, count: entries.length });
   } catch (err) {
     console.error('POST /api/entries', err.message);
