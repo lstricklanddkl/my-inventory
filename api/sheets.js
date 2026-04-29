@@ -62,6 +62,7 @@ async function ensureHeaders(client) {
 
 async function getEntries() {
   const client = buildClient();
+  await ensureHeaders(client);
   const res = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'Inventory!A2:E',
@@ -98,6 +99,7 @@ async function appendEntries(entries) {
 
 async function getProduct(barcode) {
   const client = buildClient();
+  await ensureHeaders(client);
   const res = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: 'Products!A2:B',
