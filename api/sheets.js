@@ -34,6 +34,20 @@ async function firstCell(client, range) {
 }
 
 async function ensureHeaders(client) {
+  // Step 1 — create any missing tabs
+  const meta = await client.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const existing = meta.data.sheets.map(s => s.properties.title);
+  const tabsToCreate = ['Inventory', 'Products'].filter(t => !existing.includes(t));
+  if (tabsToCreate.length) {
+    await client.spreadsheets.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        requests: tabsToCreate.map(title => ({ addSheet: { properties: { title } } })),
+      },
+    });
+  }
+
+  // Step 2 — write header rows if the tabs are empty
   const [invHeader, prodHeader] = await Promise.all([
     firstCell(client, 'Inventory!A1'),
     firstCell(client, 'Products!A1'),
