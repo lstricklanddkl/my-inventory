@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Inventory Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:      #007AFF;
+      --green:     #34C759;
+      --orange:    #FF9500;
+      --bg:        #F2F2F7;
+      --surface:   #FFFFFF;
+      --label:     #1C1C1E;
+      --secondary: #8E8E93;
+      --separator: #C6C6C8;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--label);
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    /* ── Views ── */
+    .view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .view.active { display: flex; }
+
+    /* ── Tab bar ── */
+    .tabbar {
+      display: flex;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--separator);
+      padding-bottom: env(safe-area-inset-bottom);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--secondary);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .tab.active { color: var(--blue); }
+    .tab svg { width: 24px; height: 24px; }
+
+    /* ── Scanner view ── */
+    #view-scanner {
+      background: #000;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #reader { width: 100%; max-width: 540px; }
+    /* suppress html5-qrcode's built-in header/footer chrome */
+    #reader__header_message,
+    #reader__dashboard_section_swaplink,
+    #reader__filescan_input { display: none !important; }
+
+    #scan-prompt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 32px;
+      text-align: center;
+    }
+    #scan-prompt p { color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.5; }
+    #btn-start-scan {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 32px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #scan-hint {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      color: rgba(255,255,255,0.75);
+      font-size: 14px;
+    }
+
+    /* ── Inventory view ── */
+    #inv-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+    }
+    .inv-row {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 8px;
+    }
+    .inv-row-main { flex: 1; min-width: 0; }
+    .inv-name {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .inv-meta { font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .inv-qty { font-size: 22px; font-weight: 700; color: var(--blue); margin-left: 12px; flex-shrink: 0; }
+    .inv-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--secondary);
+      font-size: 16px;
+    }
+    .inv-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--separator);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .inv-count { font-size: 14px; color: var(--secondary); }
+    #btn-sync {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 140px;
+    }
+    #btn-sync:disabled { opacity: 0.5; }
+
+    /* ── Settings view ── */
+    .settings-body { padding: 24px 16px; overflow-y: auto; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+    }
+    .hint { font-size: 14px; color: var(--secondary); line-height: 1.5; margin-bottom: 16px; }
+
+    /* ── Shared inputs / buttons ── */
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--separator);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--label);
+      -webkit-appearance: none;
+    }
+    input:focus { outline: none; border-color: var(--blue); }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-primary:disabled { opacity: 0.5; }
+    .btn-ghost {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--blue);
+      font-size: 16px;
+      padding: 12px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* ── Add-item sheet ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.45);
+      align-items: flex-end;
+    }
+    .overlay.active {
+      display: flex;
+    }
+    .sheet {
+      background: var(--bg);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      padding: 16px 20px calc(24px + env(safe-area-inset-bottom));
+      max-height: 92dvh;
+      overflow-y: auto;
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--separator);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .sheet .field-group { margin-bottom: 20px; }
+    .name-hint { font-weight: 400; text-transform: none; font-size: 12px; color: var(--orange); }
+    .barcode-value { font-size: 15px; font-family: monospace; color: var(--label); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: calc(60px + env(safe-area-inset-bottom) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(28,28,30,0.9);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Scanner ── -->
+  <div id="view-scanner" class="view active">
+    <div id="reader"></div>
+    <div id="scan-prompt">
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="7" y1="12" x2="17" y2="12" stroke-width="2.5"/>
+      </svg>
+      <p>Tap the button below to activate your camera and start scanning barcodes.</p>
+      <button id="btn-start-scan">Start Scanner</button>
+    </div>
+    <p id="scan-hint">Align barcode within the frame</p>
+  </div>
+
+  <!-- ── Inventory ── -->
+  <div id="view-inventory" class="view">
+    <div id="inv-scroll">
+      <div id="inv-list"></div>
+      <div id="inv-empty" class="inv-empty" style="display:none;">No entries yet — scan something!</div>
+    </div>
+    <div class="inv-footer">
+      <span class="inv-count" id="inv-count">0 entries</span>
+      <button id="btn-sync">Sync to Sheets</button>
+    </div>
+  </div>
+
+  <!-- ── Settings ── -->
+  <div id="view-settings" class="view">
+    <div class="settings-body">
+      <div class="field-label">API URL <span style="font-weight:400;text-transform:none;color:var(--green);font-size:11px;">(recommended)</span></div>
+      <p class="hint">
+        Deploy the Node.js service from <code>inventory-api/</code> and paste its URL here.
+        Enables real-time Sheets reads/writes with full confirmation.
+      </p>
+      <input type="text" id="input-api-url"
+        placeholder="https://your-service.onrender.com"
+        autocomplete="off" autocapitalize="none" autocorrect="off" />
+
+      <div class="field-label" style="margin-top:28px;">
+        Apps Script URL <span style="font-weight:400;text-transform:none;color:var(--secondary);font-size:11px;">(fallback)</span>
+      </div>
+      <p class="hint">Used only when no API URL is set. Fire-and-forget; no read-back.</p>
+      <input type="text" id="input-url"
+        placeholder="https://script.google.com/macros/s/…/exec"
+        autocomplete="off" autocapitalize="none" autocorrect="off" />
+
+      <button class="btn-primary" id="btn-save-url" style="margin-top:16px;">Save</button>
+    </div>
+  </div>
+
+  <!-- ── Add-item sheet ── -->
+  <div id="overlay-add" class="overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="field-group">
+        <div class="field-label">Barcode</div>
+        <div class="barcode-value" id="add-barcode"></div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">
+          Product Name&nbsp;<span class="name-hint" id="add-name-hint"></span>
+        </div>
+        <input type="text" id="add-name" placeholder="e.g. Organic Whole Milk" />
+      </div>
+      <div class="field-group">
+        <div class="field-label">Quantity</div>
+        <input type="number" id="add-qty" placeholder="e.g. 12" min="0" step="any" inputmode="decimal" />
+      </div>
+      <button class="btn-primary" id="btn-save-entry">Save Entry</button>
+      <button class="btn-ghost" id="btn-cancel-entry">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── Tab bar ── -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="scanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="7" y1="12" x2="17" y2="12" stroke-width="2.2"/>
+      </svg>
+      Scanner
+    </button>
+    <button class="tab" data-view="inventory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="8" y1="8" x2="16" y2="8"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+        <line x1="8" y1="16" x2="12" y2="16"/>
+      </svg>
+      Inventory
+    </button>
+    <button class="tab" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      </svg>
+      Settings
+    </button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────────────────────────
+const Store = {
+  products()  { return JSON.parse(localStorage.getItem('inv_products') || '{}'); },
+  entries()   { return JSON.parse(localStorage.getItem('inv_entries')  || '[]'); },
+  sheetsUrl() { return localStorage.getItem('inv_sheets_url') || ''; },
+  apiUrl()    { return localStorage.getItem('inv_api_url') || ''; },
+
+  cacheProduct(barcode, name) {
+    const p = this.products();
+    p[barcode] = name;
+    localStorage.setItem('inv_products', JSON.stringify(p));
+  },
+  productName(barcode) { return this.products()[barcode] || null; },
+
+  addEntry(barcode, name, qty) {
+    const list = this.entries();
+    list.unshift({
+      id: Date.now(),
+      barcode,
+      name,
+      qty: Number(qty),
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem('inv_entries', JSON.stringify(list));
+  },
+
+  setSheetsUrl(url) { localStorage.setItem('inv_sheets_url', url); },
+  setApiUrl(url)    { localStorage.setItem('inv_api_url', url); },
+};
+
+// ── Product lookup ────────────────────────────────────────────────────────────
+async function lookupProduct(barcode) {
+  // 1. Local cache — always fastest
+  const local = Store.productName(barcode);
+  if (local) return { name: local, source: 'local' };
+
+  // 2. API (Sheets Products tab)
+  const apiUrl = Store.apiUrl();
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/api/products/${encodeURIComponent(barcode)}`);
+      if (res.ok) {
+        const d = await res.json();
+        if (d.found) {
+          Store.cacheProduct(barcode, d.name);
+          return { name: d.name, source: 'local' };
+        }
+      }
+    } catch { /* API offline, fall through */ }
+  }
+
+  // 3. Open Food Facts
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+    const d   = await res.json();
+    if (d.status === 1 && d.product?.product_name) {
+      return { name: d.product.product_name, source: 'api' };
+    }
+  } catch { /* offline */ }
+
+  return { name: '', source: 'unknown' };
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── Tab navigation ────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab =>
+  tab.addEventListener('click', () => switchView(tab.dataset.view))
+);
+
+async function switchView(name) {
+  if (name !== 'scanner') await stopScanner();
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.view === name)
+  );
+  document.getElementById(`view-${name}`).classList.add('active');
+
+  if (name === 'inventory') renderInventory();
+  if (name === 'settings')  loadSettings();
+}
+
+// ── Scanner ───────────────────────────────────────────────────────────────────
+let scanner       = null;
+let scannerActive = false;
+let pendingScan   = false;
+
+document.getElementById('btn-start-scan').addEventListener('click', startScanner);
+
+async function startScanner() {
+  if (typeof Html5Qrcode === 'undefined') {
+    toast('Scanner library failed to load — check your connection.');
+    return;
+  }
+  document.getElementById('scan-prompt').style.display = 'none';
+  document.getElementById('scan-hint').style.display   = 'block';
+
+  scanner = new Html5Qrcode('reader');
+  try {
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 260, height: 150 }, aspectRatio: 1.77 },
+      onBarcodeScanned,
+      () => {} // suppress per-frame decode errors
+    );
+    scannerActive = true;
+  } catch (err) {
+    document.getElementById('scan-prompt').style.display = 'flex';
+    document.getElementById('scan-hint').style.display   = 'none';
+    toast('Camera error: ' + (err.message || err));
+  }
+}
+
+async function stopScanner() {
+  if (scanner && scannerActive) {
+    try { await scanner.stop(); } catch { /* ignore */ }
+    scanner       = null;
+    scannerActive = false;
+    document.getElementById('reader').innerHTML        = '';
+    document.getElementById('scan-prompt').style.display = 'flex';
+    document.getElementById('scan-hint').style.display   = 'none';
+  }
+}
+
+async function onBarcodeScanned(barcode) {
+  if (pendingScan) return;
+  pendingScan = true;
+  const result = await lookupProduct(barcode);
+  showAddSheet(barcode, result.name, result.source);
+}
+
+// ── Add-item sheet ────────────────────────────────────────────────────────────
+function showAddSheet(barcode, name, source) {
+  document.getElementById('add-barcode').textContent    = barcode;
+  document.getElementById('add-name').value             = name;
+  document.getElementById('add-qty').value              = '';
+  document.getElementById('add-name-hint').textContent  =
+    source === 'unknown' ? '(not found — please enter)' :
+    source === 'api'     ? '(from Open Food Facts)'     : '';
+
+  document.getElementById('overlay-add').classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => {
+    document.getElementById(source === 'unknown' ? 'add-name' : 'add-qty').focus();
+  }, 150);
+}
+
+function hideAddSheet() {
+  document.getElementById('overlay-add').classList.remove('active');
+  document.body.style.overflow = '';
+  pendingScan = false;
+}
+
+document.getElementById('btn-cancel-entry').addEventListener('click', hideAddSheet);
+document.getElementById('overlay-add').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay-add')) hideAddSheet();
+});
+
+document.getElementById('btn-save-entry').addEventListener('click', saveEntry);
+document.getElementById('add-qty').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveEntry();
+});
+
+async function saveEntry() {
+  const barcode = document.getElementById('add-barcode').textContent.trim();
+  const name    = document.getElementById('add-name').value.trim();
+  const qty     = parseFloat(document.getElementById('add-qty').value);
+
+  if (!name)                   { toast('Please enter a product name'); return; }
+  if (isNaN(qty) || qty <= 0)  { toast('Please enter a valid quantity'); return; }
+
+  const entry = { id: Date.now(), barcode, name, qty, timestamp: new Date().toISOString() };
+
+  // Always write locally first so the app never blocks on network
+  Store.cacheProduct(barcode, name);
+  Store.addEntry(barcode, name, qty);
+  hideAddSheet();
+
+  const apiUrl = Store.apiUrl();
+  if (apiUrl) {
+    toast('Saving to Sheets…');
+    try {
+      await Promise.all([
+        fetch(`${apiUrl}/api/entries`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: [entry] }) }),
+        fetch(`${apiUrl}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ barcode, name }) }),
+      ]);
+      toast('Saved to Sheets');
+    } catch {
+      toast('Saved locally — Sheets sync failed');
+    }
+  } else {
+    toast('Saved locally');
+  }
+}
+
+// ── Inventory ─────────────────────────────────────────────────────────────────
+function displayEntries(entries) {
+  const list  = document.getElementById('inv-list');
+  const empty = document.getElementById('inv-empty');
+  document.getElementById('inv-count').textContent = `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}`;
+
+  if (entries.length === 0) {
+    list.innerHTML = ''; empty.style.display = 'flex'; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = entries.map(e => `
+    <div class="inv-row">
+      <div class="inv-row-main">
+        <div class="inv-name">${esc(e.name)}</div>
+        <div class="inv-meta">${esc(e.barcode)} &middot; ${new Date(e.timestamp).toLocaleString()}</div>
+      </div>
+      <div class="inv-qty">${e.qty}</div>
+    </div>
+  `).join('');
+}
+
+async function renderInventory() {
+  const apiUrl = Store.apiUrl();
+  if (apiUrl) {
+    document.getElementById('btn-sync').textContent = 'Refresh';
+    try {
+      const res = await fetch(`${apiUrl}/api/entries`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      displayEntries(await res.json());
+      return;
+    } catch {
+      toast('Could not reach API — showing local data');
+    }
+  } else {
+    document.getElementById('btn-sync').textContent = 'Sync to Sheets';
+  }
+  displayEntries(Store.entries());
+}
+
+document.getElementById('btn-sync').addEventListener('click', async () => {
+  const apiUrl = Store.apiUrl();
+  const btn    = document.getElementById('btn-sync');
+  btn.disabled = true;
+
+  if (apiUrl) {
+    // API mode: pull latest from Sheets
+    btn.textContent = 'Refreshing…';
+    try {
+      const res = await fetch(`${apiUrl}/api/entries`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      displayEntries(await res.json());
+      toast('Refreshed from Sheets');
+    } catch (e) {
+      toast('Refresh failed: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Refresh';
+    }
+    return;
+  }
+
+  // Fallback: Apps Script fire-and-forget
+  const scriptUrl = Store.sheetsUrl();
+  if (!scriptUrl) {
+    toast('Add an API or Apps Script URL in Settings first');
+    btn.disabled = false;
+    switchView('settings');
+    return;
+  }
+  btn.textContent = 'Syncing…';
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ entries: Store.entries() }),
+      mode: 'no-cors',
+    });
+    toast('Sync sent — check your Sheet to confirm');
+  } catch (e) {
+    toast('Sync error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sync to Sheets';
+  }
+});
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function loadSettings() {
+  document.getElementById('input-api-url').value = Store.apiUrl();
+  document.getElementById('input-url').value     = Store.sheetsUrl();
+}
+
+document.getElementById('btn-save-url').addEventListener('click', () => {
+  const apiUrl    = document.getElementById('input-api-url').value.trim();
+  const scriptUrl = document.getElementById('input-url').value.trim();
+
+  if (apiUrl && !apiUrl.startsWith('https://')) {
+    toast('API URL must start with https://'); return;
+  }
+  if (scriptUrl && !scriptUrl.startsWith('https://script.google.com')) {
+    toast('Apps Script URL should start with https://script.google.com'); return;
+  }
+
+  Store.setApiUrl(apiUrl);
+  Store.setSheetsUrl(scriptUrl);
+  toast('Settings saved');
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
