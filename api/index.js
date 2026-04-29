@@ -5,7 +5,12 @@ const { getEntries, appendEntries, getProduct, upsertProduct } = require('./shee
 
 const app = express();
 
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+}));
+app.options('*', cors()); // explicit preflight handler
 app.use(express.json());
 
 // ── Health check ───────────────────────────────────────────────────────────────
